@@ -8,10 +8,13 @@ TextEditingController inputName = TextEditingController();
 TextEditingController inputEmail = TextEditingController();
 TextEditingController inputGender = TextEditingController();
 
+final editName = TextEditingController();
+final edittEmail = TextEditingController();
+final editGender = TextEditingController();
 Future<http.Response> getData() async {
   var result =
       await http.get(Uri.parse("http://192.168.231.2:8082/api/user/getAll"));
-
+  print(result.body);
   return result;
 }
 
@@ -33,8 +36,9 @@ Future<http.Response> postData() async {
 
 Future<http.Response> updateData(id) async {
   Map<String, dynamic> data = {
-    "nama": "jhon dea",
-    "email": "jhondea@gmail.com"
+    "nama": editName.text,
+    "email": edittEmail.text,
+    "gender": editGender.text,
   };
   var result = await http.put(
     Uri.parse("http://192.168.231.2:8082/api/user/update/${id}"),
@@ -73,7 +77,7 @@ class _NetworkApiState extends State<NetworkApi> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          "Networking",
+          "NETWORKING",
         ),
         centerTitle: true,
       ),
@@ -87,11 +91,14 @@ class _NetworkApiState extends State<NetworkApi> {
                 itemCount: json.length,
                 itemBuilder: (context, index) {
                   return Card(
-                    margin: const EdgeInsets.all(18.0),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15)),
+                    margin: const EdgeInsets.all(15.0),
                     child: ListTile(
                       leading: CircleAvatar(
-                        child: Text(json[index]['nama'][0]),
-                        backgroundColor: Colors.amber,
+                        child: Text(json[index]['nama'][0],
+                            style: TextStyle(color: Colors.white)),
+                        backgroundColor: Colors.blue,
                       ),
                       title: Text(
                           "${json[index]['nama']} | ${json[index]['gender']}"),
@@ -101,6 +108,9 @@ class _NetworkApiState extends State<NetworkApi> {
                         children: [
                           IconButton(
                             onPressed: (() {
+                              editName.text = json[index]["nama"];
+                              edittEmail.text = json[index]["email"];
+                              editGender.text = json[index]["gender"];
                               showDialog(
                                   context: context,
                                   builder: (BuildContext context) =>
@@ -122,7 +132,7 @@ class _NetworkApiState extends State<NetworkApi> {
                                                   }
                                                   return null;
                                                 },
-                                                controller: inputName,
+                                                controller: editName,
                                                 decoration: InputDecoration(
                                                   border: OutlineInputBorder(),
                                                   labelText: 'Nama',
@@ -143,7 +153,7 @@ class _NetworkApiState extends State<NetworkApi> {
                                                   }
                                                   return null;
                                                 },
-                                                controller: inputEmail,
+                                                controller: edittEmail,
                                                 decoration: InputDecoration(
                                                   border: OutlineInputBorder(),
                                                   labelText: 'Email',
@@ -153,7 +163,7 @@ class _NetworkApiState extends State<NetworkApi> {
                                                 height: 10,
                                               ),
                                               TextFormField(
-                                                controller: inputGender,
+                                                controller: editGender,
                                                 decoration: InputDecoration(
                                                   border: OutlineInputBorder(),
                                                   labelText: 'Gender',
@@ -175,8 +185,15 @@ class _NetworkApiState extends State<NetworkApi> {
                                                 ),
                                               ),
                                               TextButton(
-                                                onPressed: () {
+                                                onPressed: () async {
+                                                  await updateData(
+                                                    json[index]['id'],
+                                                  );
+                                                  editName.clear();
+                                                  edittEmail.clear();
+                                                  editGender.clear();
                                                   Navigator.pop(context);
+                                                  setState(() {});
                                                 },
                                                 child: const Text('OK'),
                                               ),
@@ -189,10 +206,9 @@ class _NetworkApiState extends State<NetworkApi> {
                           ),
                           IconButton(
                             icon: Icon(Icons.delete),
-                            onPressed: () {
-                              setState(() {
-                                deleteData(json[index]['id']);
-                              });
+                            onPressed: () async {
+                              await deleteData(json[index]['id']);
+                              setState(() {});
                             },
                           ),
                         ],
@@ -216,7 +232,7 @@ class _NetworkApiState extends State<NetworkApi> {
             context: context,
             builder: (BuildContext context) => AlertDialog(
               title: const Text(
-                'Add User',
+                'Input User',
                 textAlign: TextAlign.center,
               ),
               content: Form(
@@ -280,15 +296,14 @@ class _NetworkApiState extends State<NetworkApi> {
                       ),
                     ),
                     TextButton(
-                      onPressed: () {
+                      onPressed: () async {
                         if (_formKey.currentState!.validate()) {
-                          setState(() {
-                            postData();
-                            inputName.clear();
-                            inputEmail.clear();
-                            inputGender.clear();
-                            Navigator.pop(context);
-                          });
+                          await postData();
+                          inputName.clear();
+                          inputEmail.clear();
+                          inputGender.clear();
+                          Navigator.pop(context);
+                          setState(() {});
                         }
                       },
                       child: const Text('OK'),
